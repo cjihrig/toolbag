@@ -43,6 +43,10 @@ server.register({
       path: '/client/{clientId}/report',
       handler: function (request, reply) {
         // TODO: Process client data in request.payload
+        if (request.payload.type !== 'stats') {
+          console.log(request.payload);
+        }
+
         reply();
       }
     },
@@ -54,8 +58,8 @@ server.register({
         // Take a heap dump on each client
         server.eachSocket(function each (socket) {
           server.publish(socket.app.commands, {
-            command: 'take-heapdump',
-            data: {
+            type: 'take-heapdump',
+            payload: {
               name: request.params.name
             }
           });
