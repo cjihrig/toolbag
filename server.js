@@ -58,9 +58,27 @@ server.register({
         // Take a heap dump on each client
         server.eachSocket(function each (socket) {
           server.publish(socket.app.commands, {
-            type: 'take-heapdump',
+            type: 'heapdump-create',
             payload: {
               name: request.params.name
+            }
+          });
+        });
+
+        reply();
+      }
+    },
+    {
+      // Proof of concept route
+      method: 'GET',
+      path: '/signal/{name}',
+      handler: function (request, reply) {
+        // Send a signal to each client
+        server.eachSocket(function each (socket) {
+          server.publish(socket.app.commands, {
+            type: 'signal-kill',
+            payload: {
+              signal: request.params.name
             }
           });
         });
