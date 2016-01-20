@@ -1,9 +1,12 @@
 'use strict';
+
 const Hapi = require('hapi');
+const Joi = require('joi');
 const Nes = require('nes');
 const Uuid = require('node-uuid');
-const server = new Hapi.Server();
 
+
+const server = new Hapi.Server({ debug: { request: ['error', 'response', 'received'] } });
 server.connection({ port: 5000 });
 server.register({
   register: Nes,
@@ -17,37 +20,39 @@ server.register({
     {
       method: 'POST',
       path: '/client/register',
-      handler: function (request, reply) {
-        const id = Uuid.v4();
-        const commandSubscription = `/client/${id}/command`;
-        const reportRoute = {
-          method: 'POST',
-          path: `/client/${id}/report`
-        };
-        const data = {
-          id,
-          subscribe: commandSubscription,
-          reporting: reportRoute
-        };
+      config: {
+        id: 'register',
+        validate: {
+          payload: {
+            info: Joi.object().description('information about process')
+          }
+        },
+        handler: function (request, reply) {
+          const id = Uuid.v4();
+          const data = {
+            id,
+            command: '/client/${id}/command'
+          };
 
-        request.socket.app = {
-          id,
-          commands: commandSubscription
-        };
+          request.socket.app = data;
 
-        reply(data);
+          reply(data);
+        }
       }
     },
     {
       method: 'POST',
       path: '/client/{clientId}/report',
-      handler: function (request, reply) {
-        // TODO: Process client data in request.payload
-        if (request.payload.type !== 'stats') {
-          console.log(request.payload);
-        }
+      config: {
+        id: 'report',
+        handler: function (request, reply) {
+          // TODO: Process client data in request.payload
+          if (request.payload.type !== 'stats') {
+            console.log(request.payload);
+          }
 
-        reply();
+          reply();
+        }
       }
     },
     {
@@ -57,7 +62,7 @@ server.register({
       handler: function (request, reply) {
         // Take a heap dump on each client
         server.eachSocket(function each (socket) {
-          server.publish(socket.app.commands, {
+          server.publish(socket.app.command, {
             type: 'heapdump-create',
             payload: {
               name: request.params.name
@@ -75,7 +80,7 @@ server.register({
       handler: function (request, reply) {
         // Send a signal to each client
         server.eachSocket(function each (socket) {
-          server.publish(socket.app.commands, {
+          server.publish(socket.app.command, {
             type: 'signal-kill',
             payload: {
               signal: request.params.name
