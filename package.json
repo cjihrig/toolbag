@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "belly-button": "1.0.0",
-    "borland": "0.0.x",
+    "borland": "0.x.x",
     "hapi": "12.1.0"
   },
   "keywords": [
