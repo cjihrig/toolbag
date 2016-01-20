@@ -30,9 +30,8 @@
   },
   "devDependencies": {
     "belly-button": "1.0.0",
-    "hapi": "12.1.0",
-    "joi": "7.2.2",
-    "node-uuid": "1.4.7"
+    "borland": "0.0.x",
+    "hapi": "12.1.0"
   },
   "keywords": [
     "tooling",
