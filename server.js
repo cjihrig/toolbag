@@ -1,43 +1,60 @@
 'use strict';
+
 const Hapi = require('hapi');
+const Joi = require('joi');
 const Nes = require('nes');
 const Uuid = require('node-uuid');
+
+
+const registered = {};
 
 const server = new Hapi.Server({
   debug: { request: ['error' /*, 'response', 'received'*/] }
 });
 
 server.connection({ port: 5000 });
-server.register({
-  register: Nes,
-  options: { auth: false }
-}, function (err) {
+server.register(Nes, function (err) {
   if (err) {
     throw err;
   }
 
+  // auth succeeds, we just need credentials object with client Id for the filter later
+  server.auth.scheme('custom', function (server, options) {
+    return {
+      authenticate: function (request, reply) {
+        request.connection.clientId = request.connection.clientId || Uuid.v4();
+        reply.continue({ credentials: { clientId: request.connection.clientId } });
+      }
+    };
+  });
+  server.auth.strategy('default', 'custom');
+  server.auth.default('default');
+
   server.route([
     {
       method: 'POST',
-      path: '/client/register',
+      path: '/register',
       config: {
         id: 'register',
+        validate: {
+          payload: {
+            info: Joi.object().description('information about process'),
+            commands: Joi.array().description('commands the toolbox can perform')
+          }
+        },
         handler: function (request, reply) {
-          const id = Uuid.v4();
-          const data = {
-            id,
-            report: 'report',
-            command: `/client/${id}/command`
+          registered[request.auth.credentials.clientId] = {
+            info: request.payload.info,
+            commands: request.payload.commands
           };
 
-          request.socket.app = data;
-          reply(data);
+          reply({ clientId: request.connection.clientId });
         }
       }
     },
     {
       method: 'POST',
-      path: '/client/{clientId}/report',
+      path: '/report',
       config: {
         id: 'report',
         handler: function (request, reply) {
@@ -51,63 +68,47 @@ server.register({
       }
     },
     {
-      // Proof of concept route
       method: 'GET',
-      path: '/heapdump/{name}',
-      handler: function (request, reply) {
-        // Take a heap dump on each client
-        server.eachSocket(function each (socket) {
-          server.publish(socket.app.command, {
-            type: 'heapdump-create',
-            payload: {
-              name: request.params.name
-            }
-          });
-        });
-
-        reply();
-      }
-    },
-    {
-      // Proof of concept route
-      method: 'GET',
-      path: '/signal/{name}',
-      handler: function (request, reply) {
-        // Send a signal to each client
-        server.eachSocket(function each (socket) {
-          server.publish(socket.app.command, {
-            type: 'signal-kill',
-            payload: {
-              signal: request.params.name
-            }
-          });
-        });
-
-        reply();
-      }
-    },
-    {
-      // Proof of concept route
-      method: 'GET',
-      path: '/report',
-      handler: function (request, reply) {
-        function onMessage (msg) {
-          const obj = JSON.parse(msg);
-
-          reply(obj.payload);
+      path: '/clients',
+      config: {
+        id: 'clients',
+        auth: false,
+        handler: function (request, reply) {
+          reply(registered);
         }
-
-        server.eachSocket(function each (socket) {
-          socket._ws.once('message', onMessage);
-          server.publish(socket.app.command, {
-            type: 'reporter-get-report'
-          });
-        });
+      }
+    },
+    {
+      method: 'POST',
+      path: '/command',
+      config: {
+        id: 'command',
+        auth: false,
+        validate: {
+          payload: {
+            command: Joi.string().required().description('command to send to clients'),
+            options: Joi.object().optional().description('any command arguments'),
+            clientIds: Joi.array().optional().description('list of clientIds to command')
+          }
+        },
+        handler: function (request, reply) {
+          request.server.publish('/command', request.payload);
+          return reply();
+        }
       }
     }
   ]);
 
-  server.subscription('/client/{clientId}/command');
+  server.subscription('/command', {
+    filter: function (path, message, options, next) {
+      // match all sockets if no clientIds specified
+      if (!message.clientIds || !message.clientIds.length) {
+        return next(true);
+      }
+
+      return next(message.clientIds.indexOf(options.credentials.clientId) !== -1);
+    }
+  });
   server.start(function (err) {
     if (err) {
       console.error(`Server failed to start - ${err.message}`);
