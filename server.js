@@ -5,9 +5,13 @@ const Joi = require('joi');
 const Nes = require('nes');
 const Uuid = require('node-uuid');
 
-let registered = {};
 
-const server = new Hapi.Server({ debug: { request: ['error', 'response', 'received'] } });
+const registered = {};
+
+const server = new Hapi.Server({
+  debug: { request: ['error' /*, 'response', 'received'*/] }
+});
+
 server.connection({ port: 5000 });
 server.register({
   register: Nes,
@@ -100,6 +104,25 @@ server.register({
         });
 
         reply();
+      }
+    },
+    {
+      // Proof of concept route
+      method: 'GET',
+      path: '/report',
+      handler: function (request, reply) {
+        function onMessage (msg) {
+          const obj = JSON.parse(msg);
+
+          reply(obj.payload);
+        }
+
+        server.eachSocket(function each (socket) {
+          socket._ws.once('message', onMessage);
+          server.publish(socket.app.command, {
+            type: 'reporter-get-report'
+          });
+        });
       }
     }
   ]);
