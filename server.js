@@ -85,6 +85,23 @@ server.register({
 
         reply();
       }
+    },
+    {
+      // Proof of concept route
+      method: 'GET',
+      path: '/report',
+      handler: function (request, reply) {
+        function onMessage (msg) {
+          reply(msg);
+        }
+
+        server.eachSocket(function each (socket) {
+          socket._ws.once('message', onMessage);
+          server.publish(socket.app.commands, {
+            type: 'reporter-get-report'
+          });
+        });
+      }
     }
   ]);
 

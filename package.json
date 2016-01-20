@@ -24,6 +24,7 @@
     "insync": "2.1.1",
     "lodash.merge": "4.0.1",
     "nes": "2.1.0",
+    "own2json": "1.0.0",
     "v8-profiler": "5.5.0"
   },
   "devDependencies": {
