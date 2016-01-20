@@ -13,10 +13,7 @@ const server = new Hapi.Server({
 });
 
 server.connection({ port: 5000 });
-server.register({
-  register: Nes,
-  options: { auth: false }
-}, function (err) {
+server.register(Nes, function (err) {
   if (err) {
     throw err;
   }
@@ -25,8 +22,8 @@ server.register({
   server.auth.scheme('custom', function (server, options) {
     return {
       authenticate: function (request, reply) {
-        request.socket.clientId = request.socket.clientId || Uuid.v4();
-        reply.continue({ credentials: { clientId: request.socket.clientId } });
+        request.connection.clientId = request.connection.clientId || Uuid.v4();
+        reply.continue({ credentials: { clientId: request.connection.clientId } });
       }
     };
   });
@@ -51,7 +48,7 @@ server.register({
             commands: request.payload.commands
           };
 
-          reply({ clientId: request.socket.clientId });
+          reply({ clientId: request.connection.clientId });
         }
       }
     },
@@ -71,63 +68,47 @@ server.register({
       }
     },
     {
-      // Proof of concept route
       method: 'GET',
-      path: '/heapdump/{name}',
-      handler: function (request, reply) {
-        // Take a heap dump on each client
-        server.eachSocket(function each (socket) {
-          server.publish(socket.app.command, {
-            type: 'heapdump-create',
-            payload: {
-              name: request.params.name
-            }
-          });
-        });
-
-        reply();
-      }
-    },
-    {
-      // Proof of concept route
-      method: 'GET',
-      path: '/signal/{name}',
-      handler: function (request, reply) {
-        // Send a signal to each client
-        server.eachSocket(function each (socket) {
-          server.publish(socket.app.command, {
-            type: 'signal-kill',
-            payload: {
-              signal: request.params.name
-            }
-          });
-        });
-
-        reply();
-      }
-    },
-    {
-      // Proof of concept route
-      method: 'GET',
-      path: '/report',
-      handler: function (request, reply) {
-        function onMessage (msg) {
-          const obj = JSON.parse(msg);
-
-          reply(obj.payload);
+      path: '/clients',
+      config: {
+        id: 'clients',
+        auth: false,
+        handler: function (request, reply) {
+          reply(registered);
         }
-
-        server.eachSocket(function each (socket) {
-          socket._ws.once('message', onMessage);
-          server.publish(socket.app.command, {
-            type: 'reporter-get-report'
-          });
-        });
+      }
+    },
+    {
+      method: 'POST',
+      path: '/command',
+      config: {
+        id: 'command',
+        auth: false,
+        validate: {
+          payload: {
+            command: Joi.string().required().description('command to send to clients'),
+            options: Joi.object().optional().description('any command arguments'),
+            clientIds: Joi.array().optional().description('list of clientIds to command')
+          }
+        },
+        handler: function (request, reply) {
+          request.server.publish('/command', request.payload);
+          return reply();
+        }
       }
     }
   ]);
 
-  server.subscription('/command');
+  server.subscription('/command', {
+    filter: function (path, message, options, next) {
+      // match all sockets if no clientIds specified
+      if (!message.clientIds || !message.clientIds.length) {
+        return next(true);
+      }
+
+      return next(message.clientIds.indexOf(options.credentials.clientId) !== -1);
+    }
+  });
   server.start(function (err) {
     if (err) {
       console.error(`Server failed to start - ${err.message}`);
