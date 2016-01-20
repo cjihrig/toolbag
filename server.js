@@ -4,7 +4,7 @@ const Nes = require('nes');
 const Uuid = require('node-uuid');
 
 const server = new Hapi.Server({
-  debug: { request: ['error', 'response', 'received'] }
+  debug: { request: ['error' /*, 'response', 'received'*/] }
 });
 
 server.connection({ port: 5000 });
@@ -92,7 +92,9 @@ server.register({
       path: '/report',
       handler: function (request, reply) {
         function onMessage (msg) {
-          reply(msg);
+          const obj = JSON.parse(msg);
+
+          reply(obj.payload);
         }
 
         server.eachSocket(function each (socket) {
