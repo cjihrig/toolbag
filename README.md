@@ -12,7 +12,7 @@
 
 ## Running the Server
 
-Before starting your application, the `toolbag` server should already be running. Currently, this simply means running `node server.js`, where `server.js` is located in the `toolbag` root directory.
+Before starting your application, the `toolbag` server should already be running. Currently, this means running `node server.js` in the [borland](https://github.com/continuationlabs/borland) root directory.
 
 ## Running the Client
 
