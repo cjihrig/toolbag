@@ -5,4 +5,4 @@ const http = require('http');
 console.log('\n\nAPP STARTED');
 setInterval(function () {
   http.get('http://www.google.com');
-}, 100);
+}, 5000);
