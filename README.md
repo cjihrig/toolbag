@@ -8,7 +8,7 @@
 
 **THIS IS EARLY STAGE WORK IN PROGRESS**
 
-`toolbag` is a collection of tooling intended to be preloaded in a Node application. The tooling (heapdumps, runtime metrics reporting, etc.) communicates over WebSockets with a web server. The web server provides insight into a running application.
+`toolbag` is a collection of tooling intended to be preloaded in a Node application. The tooling (heapdumps, CPU profiling, runtime metrics reporting, etc.) runs within a Node process, and communicates with an external server. The web server provides insight into a running application.
 
 ## Running the Server
 
