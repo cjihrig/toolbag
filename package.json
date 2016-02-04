@@ -1,6 +1,6 @@
 {
   "name": "toolbag",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "preloaded Node.js tooling enhancements",
   "author": "Continuation Labs <contact@continuation.io> (http://continuation.io/)",
   "main": "lib/index.js",
