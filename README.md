@@ -41,13 +41,13 @@ Note that a number of plugins are currently provided with `toolbag`, as shown in
 ```javascript
 'use strict';
 
-const Getfile = require('toolbag/plugins/getfile');
-const Heapdump = require('toolbag/plugins/heapdump');
-const HttpReporter = require('toolbag/plugins/http_reporter');
-const Profiler = require('toolbag/plugins/profiler');
-const StatsCollector = require('toolbag/plugins/stats_collector');
-const Signal = require('toolbag/plugins/signal');
-const UdpReporter = require('toolbag/plugins/udp_reporter');
+const Getfile = require('toolbag/lib/plugins/getfile');
+const Heapdump = require('toolbag/lib/plugins/heapdump');
+const HttpReporter = require('toolbag/lib/plugins/http_reporter');
+const Profiler = require('toolbag/lib/plugins/profiler');
+const StatsCollector = require('toolbag/lib/plugins/stats_collector');
+const Signal = require('toolbag/lib/plugins/signal');
+const UdpReporter = require('toolbag/lib/plugins/udp_reporter');
 
 
 module.exports = function config (defaults, callback) {
