@@ -24,7 +24,7 @@ By utilizing preloading, `toolbag` does not require any modifications to existin
 
 ### Configuration
 
-`toolbag` is configured by adding a `toolbagrc.js` file to your project's working directory. This file should export a single function whose signature is `configure (defaults, callback)`. `defaults` contain the default configuration values set by `toolbag`. `callback` is a function with the signature `callback (err, config)`. `err` represents an error that might have occurred. `config` is an object that will be applied to `defaults`. The `config` object should adhere to the following schema.
+`toolbag` is configured by adding a `.toolbagrc.js` file to your project's working directory. This file should export a single function whose signature is `configure (defaults, callback)`. `defaults` contain the default configuration values set by `toolbag`. `callback` is a function with the signature `callback (err, config)`. `err` represents an error that might have occurred. `config` is an object that will be applied to `defaults`. The `config` object should adhere to the following schema.
 
   - `client` (object) - Information regarding the command server. If this information is not provided, the command interface is not used.
     - `host` (string) - URL for establishing the WebSocket connection.
@@ -34,7 +34,7 @@ By utilizing preloading, `toolbag` does not require any modifications to existin
     - `plugin` (object) - The plugin being registered. This should be the result of `require()`.
     - `options` (object) - An optional object that is used to pass any plugin specific configuration options.
 
-### Example `toolbagrc.js` File
+### Example `.toolbagrc.js` File
 
 Note that a number of plugins are currently provided with `toolbag`, as shown in the following example. The long term plan is to remove them from core and publish them as separate modules on npm.
 
