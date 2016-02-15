@@ -14,7 +14,8 @@
   },
   "license": "MIT",
   "scripts": {
-    "lint": "belly-button -f"
+    "lint": "belly-button -f",
+    "test": "npm run lint"
   },
   "engines": {
     "node": ">=4.0.0"
