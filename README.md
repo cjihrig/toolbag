@@ -61,6 +61,9 @@ const UdpReporter = require('toolbag/lib/plugins/udp_reporter');
 
 module.exports = function config (defaults, callback) {
   callback(null, {
+    errors: {
+      policy: 'log'
+    },
     plugins: [
       {
         plugin: BorlandCommander,
