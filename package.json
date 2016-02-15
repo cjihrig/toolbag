@@ -33,7 +33,7 @@
     "wreck": "7.0.0"
   },
   "devDependencies": {
-    "belly-button": "1.0.0",
+    "belly-button": "2.0.0",
     "borland": "0.x.x",
     "hapi": "13.0.0"
   },
