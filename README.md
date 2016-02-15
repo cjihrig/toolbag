@@ -12,11 +12,11 @@
 
 The first interface is the reporting interface. This interface is used to send runtime data to one or more destinations. Each reporter is implemented as a plugin.
 
-The second interface is the command interface. This interface communicates with an external server using a [nes WebSocket connection](https://github.com/hapijs/nes), and allows commands to be sent to the running application. Example commands include taking a heapdump or starting/stopping the CPU profiler.
+The second interface is the command interface. This interface, which is also implemented as a plugin, allows commands to be sent to the running application. Example commands include taking a heapdump or starting/stopping the CPU profiler.
 
 ## Running the Command Server
 
-The command server is not mandatory. If you choose to use it, you should start the server before starting your application. Currently, this means running `node server.js` in the [borland](https://github.com/continuationlabs/borland) root directory. See the section on client configuration for information on having the client connect to the server.
+The command server is not mandatory, and is only required if you plan to use the command interface. If you choose to use it, you should start the server before starting your application. See the section on client configuration for information on having the client connect to the server.
 
 ## Running the Client
 
@@ -26,8 +26,6 @@ By utilizing preloading, `toolbag` does not require any modifications to existin
 
 `toolbag` is configured by adding a `.toolbagrc.js` file to your project's working directory. This file should export a single function whose signature is `configure (defaults, callback)`. `defaults` contain the default configuration values set by `toolbag`. `callback` is a function with the signature `callback (err, config)`. `err` represents an error that might have occurred. `config` is an object that will be applied to `defaults`. The `config` object should adhere to the following schema.
 
-  - `client` (object) - Information regarding the command server. If this information is not provided, the command interface is not used.
-    - `host` (string) - URL for establishing the WebSocket connection.
   - `data` (object) - Information regarding any persistent storage required by `toolbag`.
     - `path` (string) - The directory where files (such as heapdumps) are stored. Defaults to a `toolbag` directory in the system's temp directory.
   - `plugins` (array of objects) - An array of `toolbag` plugins to register. Each plugin object follows the following schema.
@@ -41,10 +39,14 @@ Note that a number of plugins are currently provided with `toolbag`, as shown in
 ```javascript
 'use strict';
 
+const BorlandCommander = require('toolbag/lib/plugins/borland_commander');
 const Getfile = require('toolbag/lib/plugins/getfile');
 const Heapdump = require('toolbag/lib/plugins/heapdump');
 const HttpReporter = require('toolbag/lib/plugins/http_reporter');
+const IpcCommander = require('toolbag/lib/plugins/ipc_commander');
+const ProcessReporter = require('toolbag/lib/plugins/process_reporter');
 const Profiler = require('toolbag/lib/plugins/profiler');
+const SharedSymbol = require('toolbag/lib/plugins/shared_symbol');
 const StatsCollector = require('toolbag/lib/plugins/stats_collector');
 const Signal = require('toolbag/lib/plugins/signal');
 const UdpReporter = require('toolbag/lib/plugins/udp_reporter');
@@ -52,10 +54,13 @@ const UdpReporter = require('toolbag/lib/plugins/udp_reporter');
 
 module.exports = function config (defaults, callback) {
   callback(null, {
-    client: {
-      host: 'http://localhost:5000'
-    },
     plugins: [
+      {
+        plugin: BorlandCommander,
+        options: {
+          host: 'http://localhost:5000'
+        }
+      },
       {
         plugin: HttpReporter,
         options: {
@@ -75,6 +80,9 @@ module.exports = function config (defaults, callback) {
         }
       },
       {
+        plugin: ProcessReporter
+      },
+      {
         plugin: Getfile,
         options: defaults.data
       },
@@ -86,6 +94,7 @@ module.exports = function config (defaults, callback) {
         plugin: Profiler,
         options: defaults.data
       },
+      { plugin: SharedSymbol },
       { plugin: Signal },
       {
         plugin: StatsCollector,
