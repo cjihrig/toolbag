@@ -26,6 +26,13 @@ By utilizing preloading, `toolbag` does not require any modifications to existin
 
 `toolbag` is configured by adding a `.toolbagrc.js` file to your project's working directory. This file should export a single function whose signature is `configure (defaults, callback)`. `defaults` contain the default configuration values set by `toolbag`. `callback` is a function with the signature `callback (err, config)`. `err` represents an error that might have occurred. `config` is an object that will be applied to `defaults`. The `config` object should adhere to the following schema.
 
+  - `errors` (object) - Defines how `toolbag` errors are handled. Because `toolbag` is preloaded, normal applications are unable to handle any errors that may occur. These settings allow `toolbag` users to define an error handling policy. The `errors` object has the following schema.
+    - `policy` (string) - Defines the error handling policy. Can be one of the following strings.
+      - `swallow` - Errors are discarded.
+      - `log` - Prints the error message to `stderr`. This is the default.
+      - `log-verbose` - Prints the error message and stack trace to `stderr`.
+      - `throw` - Throws the error.
+      - `terminate` - Prints the error message and stack trace to `stderr` then calls `process.exit(1)`.
   - `data` (object) - Information regarding any persistent storage required by `toolbag`.
     - `path` (string) - The directory where files (such as heapdumps) are stored. Defaults to a `toolbag` directory in the system's temp directory.
   - `plugins` (array of objects) - An array of `toolbag` plugins to register. Each plugin object follows the following schema.
