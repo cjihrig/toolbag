@@ -1,11 +1,12 @@
 'use strict';
 
 const Code = require('code');
+const Insync = require('insync');
 const Lab = require('lab');
 const Own2Json = require('own2json');
 const StandIn = require('stand-in');
-const Manager = require('../lib/manager');
 const Client = require('../lib/client');
+const Manager = require('../lib/manager');
 
 const lab = exports.lab = Lab.script();
 const expect = Code.expect;
@@ -17,6 +18,18 @@ describe('Manager', () => {
   describe('constructor', () => {
     it('creates a new Manager object', (done) => {
       const m = new Manager({ errors: { policy: 'throw' } });
+
+      expect(m).to.be.an.instanceof(Manager);
+      expect(m._cmds).to.be.an.instanceof(Map);
+      expect(m.client).to.be.an.instanceof(Client);
+      expect(m.error).to.be.a.function();
+      done();
+    });
+
+    it('returns an instance of Manager without new', (done) => {
+      const m = Manager({ errors: { policy: 'throw' } });
+
+      expect(m).to.be.an.instanceof(Manager);
       expect(m._cmds).to.be.an.instanceof(Map);
       expect(m.client).to.be.an.instanceof(Client);
       expect(m.error).to.be.a.function();
@@ -30,10 +43,10 @@ describe('Manager', () => {
         };
       }
 
-      expect(fail()).to.throw(Error);
-      expect(fail(null)).to.throw(Error);
-      expect(fail({ errors: null })).to.throw(Error);
-      expect(fail({ errors: 'foo' })).to.throw(Error);
+      expect(fail()).to.throw(TypeError);
+      expect(fail(null)).to.throw(TypeError);
+      expect(fail({ errors: null })).to.throw(TypeError);
+      expect(fail({ errors: 'foo' })).to.throw(TypeError);
       done();
     });
   });
@@ -47,6 +60,26 @@ describe('Manager', () => {
       m.add('test', () => {});
       m.add('test', () => {});  // handle duplicates
       expect(m._cmds.size).to.equal(1);
+      done();
+    });
+
+    it('errors on invalid arguments', (done) => {
+      const m = new Manager({ errors: { policy: 'throw' } });
+
+      function fail (name, fn) {
+        expect(() => {
+          m.add(name, fn);
+        }).to.throw(TypeError);
+      }
+
+      fail();
+      fail(null);
+      fail(1);
+      fail(true);
+      fail('foo');
+      fail('foo', null);
+      fail('foo', 1);
+      fail('foo', true);
       done();
     });
   });
@@ -98,6 +131,20 @@ describe('Manager', () => {
       m.register([plug1, plug2], done);
     });
 
+    it('works with no callback function', (done) => {
+      const m = new Manager({ errors: { policy: 'throw' } });
+      const plugin = {
+        plugin: {
+          register (manager, options, callback) {
+            callback();
+            setImmediate(done);
+          }
+        }
+      };
+
+      m.register(plugin);
+    });
+
     it('bubbles up any errors during registration', (done) => {
       const m = new Manager({ errors: { policy: 'throw' } });
       const plug1 = {
@@ -118,6 +165,29 @@ describe('Manager', () => {
         expect(err.message).to.equal('test error');
         done();
       });
+    });
+
+    it('errors on schema violations', (done) => {
+      const m = new Manager({ errors: { policy: 'throw' }});
+      const plugins = [
+        undefined,
+        null,
+        '',
+        1,
+        false,
+        {},
+        { plugin: null },
+        { plugin: 'foo' },
+        { plugin: {} },
+        { plugin: { register: 1 } }
+      ];
+
+      Insync.each(plugins, (plugin, cb) => {
+        m.register(plugin, (err) => {
+          expect(err).to.be.an.instanceof(TypeError);
+          cb();
+        });
+      }, done);
     });
   });
 

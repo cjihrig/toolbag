@@ -3,6 +3,7 @@
 const Code = require('code');
 const Lab = require('lab');
 const Client = require('../lib/client');
+const Manager = require('../lib/manager');
 
 const lab = exports.lab = Lab.script();
 const expect = Code.expect;
@@ -10,12 +11,36 @@ const describe = lab.describe;
 const it = lab.it;
 
 
+function createManager () {
+  const m = new Manager({ errors: { policy: 'throw' } });
+
+  m.error = (err) => {
+    m._err = err;
+  };
+
+  return m;
+}
+
+
 describe('Client', () => {
   describe('constructor', () => {
     it('creates a new Client object', (done) => {
-      const c = new Client('foo');
+      const m = createManager();
+      const c = new Client(m);
 
-      expect(c._manager).to.equal('foo');
+      expect(c).to.be.an.instanceof(Client);
+      expect(c._manager).to.equal(m);
+      expect(c._reporters).to.deep.equal([]);
+      expect(c._commander).to.be.null();
+      done();
+    });
+
+    it('returns an instance of Client without new', (done) => {
+      const m = createManager();
+      const c = Client(m);
+
+      expect(c).to.be.an.instanceof(Client);
+      expect(c._manager).to.equal(m);
       expect(c._reporters).to.deep.equal([]);
       expect(c._commander).to.be.null();
       done();
@@ -26,11 +51,35 @@ describe('Client', () => {
   describe('setCommander()', () => {
     it('sets the commander object', (done) => {
       const c = new Client();
-      const commander = { foo: true };
+      const commander = { connect: () => {}, respond: () => {} };
 
       expect(c._commander).to.be.null();
       c.setCommander(commander);
       expect(c._commander).to.equal(commander);
+      done();
+    });
+
+    it('errors on invalid commander', (done) => {
+      const m = createManager();
+      const c = new Client(m);
+      const errRe = /commander must be an object|invalid (connect|respond)\(\) method/;
+
+      function fail (commander) {
+        c.setCommander(commander);
+        expect(m._err).to.be.an.instanceof(TypeError);
+        expect(m._err.message).to.match(errRe);
+        m._err = null;
+      }
+
+      fail(null);
+      fail(undefined);
+      fail('');
+      fail(0);
+      fail([]);
+      fail({});
+      fail({ connect: 1, respond: () => {} });
+      fail({ connect: () => {}, respond: 1 });
+      expect(c._commander).to.equal(null);
       done();
     });
   });
@@ -39,7 +88,7 @@ describe('Client', () => {
   describe('addReporter()', () => {
     it('adds reporters to the reporters list', (done) => {
       const c = new Client();
-      const reporter = { name: 'console' };
+      const reporter = { report: () => {} };
 
       expect(c._reporters).to.deep.equal([]);
       c.addReporter(reporter);
@@ -47,19 +96,43 @@ describe('Client', () => {
       expect(c._reporters[0]).to.equal(reporter);
       done();
     });
+
+    it('errors on invalid reporter', (done) => {
+      const m = createManager();
+      const c = new Client(m);
+      const errRe = /reporter must be an object|invalid report\(\) method/;
+
+      function fail (reporter) {
+        c.addReporter(reporter);
+        expect(m._err).to.be.an.instanceof(TypeError);
+        expect(m._err.message).to.match(errRe);
+        m._err = null;
+      }
+
+      fail(null);
+      fail(undefined);
+      fail('');
+      fail(0);
+      fail([]);
+      fail({});
+      fail({ report: 1 });
+      expect(c._reporters).to.deep.equal([]);
+      done();
+    });
   });
 
 
   describe('connect()', () => {
     it('calls the _commanders connect method and executes the provided callback when done', (done) => {
-      const c = new Client();
-      const manager = {report () {}}; // eslint-disable-line no-unused-vars
+      const m = createManager();
+      const c = new Client(m);
       const commander = {
         connect (manager, callback) {
-          expect(manager).to.equal(manager);
+          expect(manager).to.equal(m);
           expect(callback).to.be.a.function();
           callback();
-        }
+        },
+        respond () {}
       };
 
       c.setCommander(commander);
@@ -67,18 +140,29 @@ describe('Client', () => {
     });
 
     it('calls the _commanders connect method', (done) => {
-      const c = new Client();
-      const manager = {report () {}}; // eslint-disable-line no-unused-vars
+      const m = createManager();
+      const c = new Client(m);
       const commander = {
         connect (manager, callback) {
-          expect(manager).to.equal(manager);
+          expect(manager).to.equal(m);
           expect(callback).to.be.a.function();
           done();
-        }
+        },
+        respond () {}
       };
 
       c.setCommander(commander);
       c.connect();
+    });
+
+    it('errors if there is no commander', (done) => {
+      const c = new Client();
+
+      c.connect((err) => {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal('command interface not configured');
+        done();
+      });
     });
   });
 
@@ -89,7 +173,7 @@ describe('Client', () => {
 
       c.respond(null, (err) => {
         expect(err).to.be.an.instanceof(Error);
-        expect(err.message).to.equal('client not connected');
+        expect(err.message).to.equal('command interface not configured');
         done();
       });
     });
