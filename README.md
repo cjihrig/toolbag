@@ -6,25 +6,30 @@
 
 [![belly-button-style](https://cdn.rawgit.com/continuationlabs/belly-button/master/badge.svg)](https://github.com/continuationlabs/belly-button)
 
-**THIS IS EARLY STAGE WORK IN PROGRESS**
+`toolbag` is a collection of tooling intended to be preloaded in a Node application. The tooling (heapdumps, CPU profiling, runtime metrics reporting, etc.) runs within an application's Node process. By utilizing preloading, `toolbag` does not require any modifications to existing application code. For example, if you normally start your application with the command `node app.js`, then your command would become:
 
-`toolbag` is a collection of tooling intended to be preloaded in a Node application. The tooling (heapdumps, CPU profiling, runtime metrics reporting, etc.) runs within a Node process. `toolbag` exposes two interfaces, described below, as well as a plugin system for extending its functionality.
+```
+node -r toolbag app.js
+```
 
-The first interface is the reporting interface. This interface is used to send runtime data to one or more destinations. Each reporter is implemented as a plugin.
+## Interfaces
 
-The second interface is the command interface. This interface, which is also implemented as a plugin, allows commands to be sent to the running application. Example commands include taking a heapdump or starting/stopping the CPU profiler.
+`toolbag` exposes two interfaces. The first is the reporting interface, which is used to send runtime data to zero or more destinations. Analytics, logging, and similar types of systems represent the intended use cases of the reporting interface.
 
-## Running the Command Server
+The second interface is the command interface. This interface allows a Node process to define commands which can be remotely invoked by a command server. This interface is intended to take heapdumps, collect CPU profiles, send signals to a running process, etc.
 
-The command server is not mandatory, and is only required if you plan to use the command interface. If you choose to use it, you should start the server before starting your application. See the section on client configuration for information on having the client connect to the server.
+## Plugins
 
-## Running the Client
+`toolbag` doesn't provide much functionality out of the box. However, it supports a plugin system for adding features. All reporters and command interface implementations are written as plugins. This allows `toolbag` to remain extremely simple, yet flexible enough to work with a variety of systems. For example, a WebSocket- or IPC-based command interface can be mixed and matched with HTTP or UDP reporters, without requiring any changes to `toolbag` itself.
 
-By utilizing preloading, `toolbag` does not require any modifications to existing application code. For example, if you normally start your Node application using the command `node app.js`, then your command would become `node -r toolbag app.js`.
+## Configuration
 
-### Configuration
+`toolbag` is configured via a JavaScript file that is `require()`'ed at runtime. This file can be specified in exactly one of two ways:
 
-`toolbag` is configured by adding a `.toolbagrc.js` file to your project's working directory. This file should export a single function whose signature is `configure (defaults, callback)`. `defaults` contain the default configuration values set by `toolbag`. `callback` is a function with the signature `callback (err, config)`. `err` represents an error that might have occurred. `config` is an object that will be applied to `defaults`. The `config` object should adhere to the following schema.
+1. By adding a `.toolbagrc.js` file to your project's working directory.
+2. By specifying a `TOOLBAG_PATH` environment variable. This takes precedence over a local `.toolbagrc.js` file.
+
+The configuration file should export a single function whose signature is `configure (defaults, callback)`. `defaults` contain the default configuration values set by `toolbag`. `callback` is a function with the signature `callback (err, config)`. `err` represents any error that might have occurred. `config` is an object that will be applied to `defaults`. The `config` object should adhere to the following schema.
 
   - `errors` (object) - Defines how `toolbag` errors are handled. Because `toolbag` is preloaded, normal applications are unable to handle any errors that may occur. These settings allow `toolbag` users to define an error handling policy. The `errors` object has the following schema.
     - `policy` (string) - Defines the error handling policy. Can be one of the following strings.
@@ -41,7 +46,7 @@ By utilizing preloading, `toolbag` does not require any modifications to existin
 
 ### Example `.toolbagrc.js` File
 
-Note that a number of plugins are currently provided with `toolbag`, as shown in the following example. The long term plan is to remove them from core and publish them as separate modules on npm.
+**Note:** A number of plugins are currently provided with `toolbag`, as shown in the following example. In the future, these will be removed from `toolbag` and published as standalone modules on npm.
 
 ```javascript
 'use strict';
@@ -50,7 +55,6 @@ const BorlandCommander = require('toolbag/lib/plugins/borland_commander');
 const Getfile = require('toolbag/lib/plugins/getfile');
 const Heapdump = require('toolbag/lib/plugins/heapdump');
 const HttpReporter = require('toolbag/lib/plugins/http_reporter');
-const IpcCommander = require('toolbag/lib/plugins/ipc_commander');
 const ProcessReporter = require('toolbag/lib/plugins/process_reporter');
 const Profiler = require('toolbag/lib/plugins/profiler');
 const SharedSymbol = require('toolbag/lib/plugins/shared_symbol');
@@ -131,3 +135,166 @@ module.exports = function config (defaults, callback) {
   });
 };
 ```
+
+## Running a Command Server
+
+The command server is not mandatory, and is only required if you plan to use the command interface. As the command interface is defined via plugin, there is no predefined command server implementation. Instead command interface plugins should be developed in conjunction with a compatible server. An example is the [`borland`](https://github.com/continuationlabs/borland) hapi server plugin, and the borland commander plugin shown in the example `.toolbagrc.js` file.
+
+## API
+
+This section documents the APIs used to create `toolbag` plugins.
+
+### The `Manager` Object
+
+The manager responsible for general orchestration in `toolbag`. The manager registers plugins, implements the application's error policy, and handles other important tasks. Plugins are not expected to construct new instances of `Manager`. Instead, they should interact with the existing `manager` instance that is provided to them.
+
+#### `add (name, fn)`
+
+  - Arguments
+    - `name` (string) - The name of the command being registered.
+    - `fn (options, callback)` (function) - A function implementing the command being registered. `options` is an object used to pass parameters to the command. `callback ([err[, results]])` is used to pass an error or results from the command. If `err` is provided, it is sent back to the command server using `client.respond()`. If `err` is falsey, and `results` is provided, then it is sent back as the response.
+  - Returns
+    - Nothing
+
+This method is used to register commands that can be used with the command interface.
+
+#### `list ()`
+
+  - Arguments
+    - None
+  - Returns
+    - Array of strings
+
+Returns an array of all commands supported by the manager.
+
+#### `register (plugins[, callback])`
+
+  - Arguments
+    - `plugins` (object or array of objects) - An object or array of objects representing `toolbag` plugins.
+    - `callback (err)` (function) - An optional function that is called once registration is complete. `err` represents any errors that may have occurred.
+  - Returns
+    - Nothing
+
+This method registers one or more plugins.
+
+#### `execute (message)`
+
+  - Arguments
+    - `message` (object) - An object encapsulating a command from the command server. The object should adhere to the following schema.
+      - `command` (string) - The name of the command to execute.
+      - `options` (object) - Options passed to the command.
+  - Returns
+    - Nothing
+
+When a command is received on the command interface, it is passed to `execute()`. This method is responsible for running the command and sending any responses back to the server.
+
+#### `error (err)`
+
+  - Arguments
+    - `err` (object) - An error object to process.
+  - Returns
+    - Nothing
+
+This method is used to process `toolbag` errors. Because `toolbag` is preloaded, and not part of the user's application, `error()` is configurable. For example, in some applications, `error()` is configured to swallow errors, while other applications may choose to exit on error.
+
+### The `Client` Object
+
+The `Client` object is responsible for interacting with the command and reporting interfaces. Plugins are not expected to construct new instances of `Client`. Instead, they should interact with the existing `manager.client` instance.
+
+#### `setCommander (commander)`
+
+  - Arguments
+    - `commander` (object) - An object that supports the command interface API.
+  - Returns
+    - Nothing
+
+Sets up the command interface using `commander`.
+
+#### `addReporter (reporter)`
+
+- Arguments
+  - `reporter` (object) - An object that supports the reporter API.
+- Returns
+  - Nothing
+
+Adds `reporter` as a reporter.
+
+#### `connect ([callback])`
+
+  - Arguments
+    - `callback (err)` (function) - Optional function that is invoked once connection is complete. `err` represents any error that may have occurred.
+  - Returns
+    - Nothing
+
+This method is used to establish a connection to the command server. If the command interface is configured during startup, `toolbag` will call this method after all plugins have been registered. If this method is called, and the command interface has not been configured, then an error will be passed to `callback()`.
+
+#### `respond (message[, callback])`
+
+  - Arguments
+    - `message` (variable) - Data to send to the command server. If a non-string was passed in, it will be stringified before being passed on.
+    - `callback (err)` (function) - Optional function that is invoked after responding is complete. `err` represents any error that may have occurred.
+  - Returns
+    - Nothing
+
+This method is used to respond to the command server after receiving and executing a command. If the command interface has not been configured, an error is passed to `callback()`.
+
+#### `report (message[, callback])`
+
+  - Arguments
+    - `message` (variable) - Data to send via all attached reporters. If a non-string is passed in, it will be stringified before being passed on to the reporters.
+    - `callback (err)` (function) - Optional function that is invoked after reporting is complete. `err` represents any error that may have occurred.
+  - Returns
+    - Nothing
+
+Sends data to all configured reporter destinations.
+
+### Plugin API
+
+All plugins must be capable of being imported into an application via `require()`. This means that plugins can easily be published to npm. Each plugin must expose a `register()` function that `toolbag` will invoke during plugin registration.
+
+#### `register (manager, options, callback)`
+
+  - Arguments
+    - `manager` (object) - An instance of `Manager`.
+    - `options` (variable) - Optional configuration data passed to the plugin.
+    - `callback (err)` (function) - Invoked once registration is complete. `err` represents any error that may have occurred.
+  - Returns
+    - Nothing
+
+### Reporter API
+
+A reporter can be added by calling `manager.client.addReporter(reporter)`, typically from within a plugin's `register()` function. Any number of reporters can be added, but keep in mind that excessive reporting can potentially affect application performance.
+
+#### `report (message, callback)`
+
+  - Arguments
+    - `message` (string) - Message passed to the reporter from `client.report()`. If a non-string was passed to `client.report()`, it will be stringified before being passed on to this method.
+    - `callback (err)` (function) - Invoked after reporting is complete. `err` represents any error that may have occurred.
+  - Returns
+    - Nothing
+
+All reporters must have a `report()` method. When `client.report()` is called, each reporter's `report()` method is called. This method is responsible for passing `message` to its destination.
+
+### Command Interface API
+
+`toolbag` supports a single command interface, which is setup by calling `manager.client.setCommander(commander)`. Implementers of the command interface must minimally define `connect()` and `respond()` methods.
+
+#### `connect (manager, callback)`
+
+  - Arguments
+    - `manager` (object) - An instance of `Manager`.
+    - `callback (err)` (function) - Invoked once connection is complete. `err` represents any error that may have occurred.
+  - Returns
+    - Nothing
+
+This method is used to establish a connection to the command server. If the command interface is configured during startup, `toolbag` will call this method after all plugins have been registered.
+
+#### `respond (message, callback)`
+
+  - Arguments
+    - `message` (string) - Message passed to the command interface from `client.respond()`. If a non-string was passed to `client.respond()`, it will be stringified before being passed on to this method.
+    - `callback (err)` (function) - Invoked after responding is complete. `err` represents any error that may have occurred.
+  - Returns
+    - Nothing
+
+This method is used to respond to the command server after receiving and executing a command.
