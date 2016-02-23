@@ -3,6 +3,9 @@
 'use strict';
 const fs = require('fs');
 const http = require('http');
+
+process.binding('natives');
+
 console.log('\n\nAPP STARTED');
 setInterval(function () {
   fs.readFile(__filename, () => {
