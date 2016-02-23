@@ -55,6 +55,7 @@ const BorlandCommander = require('toolbag/lib/plugins/borland_commander');
 const Getfile = require('toolbag/lib/plugins/getfile');
 const Heapdump = require('toolbag/lib/plugins/heapdump');
 const HttpReporter = require('toolbag/lib/plugins/http_reporter');
+const Policy = require('toolbag/lib/plugins/policy');
 const ProcessReporter = require('toolbag/lib/plugins/process_reporter');
 const Profiler = require('toolbag/lib/plugins/profiler');
 const SharedSymbol = require('toolbag/lib/plugins/shared_symbol');
@@ -127,6 +128,19 @@ module.exports = function config (defaults, callback) {
             eventLoop: true,
             meta: {
               tags: ['api']
+            }
+          }
+        }
+      },
+      {
+        plugin: Policy,
+        options: {
+          blacklist: {
+            modules: {
+              fs: 'log'
+            },
+            bindings: {
+              natives: 'log-verbose'
             }
           }
         }
