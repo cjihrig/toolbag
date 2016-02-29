@@ -7,9 +7,13 @@ module.exports = { register };
 
 
 function register (manager, options, callback) {
-  const blacklist = options.blacklist || {};
+  const blacklist = Object.assign({}, options.blacklist);
   const blModules = blacklist.modules;
   const blBindings = blacklist.bindings;
+
+  manager.add('policy-get-blacklist', function getBlacklist (options, cb) {
+    cb(null, blacklist);
+  });
 
   if (blModules !== null && typeof blModules === 'object') {
     const resolveFilename = Module._resolveFilename;
