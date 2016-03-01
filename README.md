@@ -46,23 +46,12 @@ The configuration file should export a single function whose signature is `confi
 
 ### Example `.toolbagrc.js` File
 
-**Note:** A number of plugins are currently provided with `toolbag`, as shown in the following example. In the future, these will be removed from `toolbag` and published as standalone modules on npm.
+**Note:** A number of plugins are provided in the [`toolbag-plugins`](https://github.com/continuationlabs/toolbag-plugins), as shown in the following example. In the future, `toolbag-plugins` will be split up into a number of standalone npm modules.
 
 ```javascript
 'use strict';
 
-const BorlandCommander = require('toolbag/plugins/borland_commander');
-const Getfile = require('toolbag/plugins/getfile');
-const Heapdump = require('toolbag/plugins/heapdump');
-const HttpReporter = require('toolbag/plugins/http_reporter');
-const Policy = require('toolbag/plugins/policy');
-const ProcessReporter = require('toolbag/plugins/process_reporter');
-const Profiler = require('toolbag/plugins/profiler');
-const SharedSymbol = require('toolbag/plugins/shared_symbol');
-const StatsCollector = require('toolbag/plugins/stats_collector');
-const Signal = require('toolbag/plugins/signal');
-const UdpReporter = require('toolbag/plugins/udp_reporter');
-
+const ToolbagPlugins = require('toolbag-plugins');
 
 module.exports = function config (defaults, callback) {
   callback(null, {
@@ -71,13 +60,13 @@ module.exports = function config (defaults, callback) {
     },
     plugins: [
       {
-        plugin: BorlandCommander,
+        plugin: ToolbagPlugins.BorlandCommander,
         options: {
           host: 'http://localhost:5000'
         }
       },
       {
-        plugin: HttpReporter,
+        plugin: ToolbagPlugins.HttpReporter,
         options: {
           id: 'http reporter',
           method: 'POST',
@@ -86,7 +75,7 @@ module.exports = function config (defaults, callback) {
         }
       },
       {
-        plugin: UdpReporter,
+        plugin: ToolbagPlugins.UdpReporter,
         options: {
           id: 'udp reporter',
           socketType: 'udp4',
@@ -95,24 +84,20 @@ module.exports = function config (defaults, callback) {
         }
       },
       {
-        plugin: ProcessReporter
-      },
-      {
-        plugin: Getfile,
+        plugin: ToolbagPlugins.Getfile,
         options: defaults.data
       },
       {
-        plugin: Heapdump,
+        plugin: ToolbagPlugins.Heapdump,
         options: defaults.data
       },
       {
-        plugin: Profiler,
+        plugin: ToolbagPlugins.Profiler,
         options: defaults.data
       },
-      { plugin: SharedSymbol },
-      { plugin: Signal },
+      { plugin: ToolbagPlugins.Signal },
       {
-        plugin: StatsCollector,
+        plugin: ToolbagPlugins.StatsCollector,
         options: {
           enabled: true,
           period: 1000,
@@ -133,7 +118,7 @@ module.exports = function config (defaults, callback) {
         }
       },
       {
-        plugin: Policy,
+        plugin: ToolbagPlugins.Policy,
         options: {
           blacklist: {
             modules: {
