@@ -31,7 +31,9 @@
     "belly-button": "2.0.0",
     "code": "2.1.0",
     "lab": "10.1.0",
-    "stand-in": "3.2.0",
+    "stand-in": "3.2.0"
+  },
+  "optionalDependencies": {
     "toolbag-plugins": "0.x.x"
   },
   "keywords": [
