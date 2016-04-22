@@ -198,6 +198,24 @@ When a command is received on the command interface, it is passed to `execute()`
 
 This method is used to process `toolbag` errors. Because `toolbag` is preloaded, and not part of the user's application, `error()` is configurable. For example, in some applications, `error()` is configured to swallow errors, while other applications may choose to exit on error.
 
+#### `getErrorHandler (policy)`
+
+  - Arguments
+    - `policy` (string) - The error handler to retrieve.
+  - Returns
+    - Function or `undefined`
+
+Returns the error handling function associated with the name `policy`. If no error handler is defined for `policy`, then `undefined` is returned.
+
+#### `setErrorHandler (policy)`
+
+  - Arguments
+    - `policy` (string) - The error handler to use.
+  - Returns
+    - Nothing
+
+Sets `error()` to the handler associated with `policy`. If no error handler is defined for `policy`, a `TypeError` is thrown.
+
 ### The `Client` Object
 
 The `Client` object is responsible for interacting with the command and reporting interfaces. Plugins are not expected to construct new instances of `Client`. Instead, they should interact with the existing `manager.client` instance.
