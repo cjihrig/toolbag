@@ -216,6 +216,16 @@ Returns the error handling function associated with the name `policy`. If no err
 
 Sets `error()` to the handler associated with `policy`. If no error handler is defined for `policy`, a `TypeError` is thrown.
 
+#### `defineErrorHandler (policy, handler)`
+
+  - Arguments
+    - `policy` (string) - The name of the error handling policy being defined.
+    - `handler` (function) - The error handler function. This function should accept a single argument that represents the error being handled.
+  - Returns
+    - Nothing
+
+Defines a new error handling policy named `policy`. If a policy with this name already exists, it is overwritten. Note that this function only defines the error policy, it does not set it as the default policy.
+
 ### The `Client` Object
 
 The `Client` object is responsible for interacting with the command and reporting interfaces. Plugins are not expected to construct new instances of `Client`. Instead, they should interact with the existing `manager.client` instance.

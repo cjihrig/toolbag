@@ -343,4 +343,45 @@ describe('Manager', () => {
       done();
     });
   });
+
+
+  describe('defineErrorHandler()', () => {
+    it('allows new error policies to be defined', (done) => {
+      const m = new Manager({ errors: { policy: 'throw' } });
+
+      expect(() => {
+        m.error(new Error('test error'));
+      }).to.throw(Error, 'test error');
+      m.defineErrorHandler('foo', (err) => { return err.message; });
+      m.setErrorHandler('foo');
+      expect(m.error(new Error('bar'))).to.equal('bar');
+      done();
+    });
+  });
+
+  it('throws if the arguments are of the wrong type', (done) => {
+    function fail (policy, handler, errorMsg) {
+      expect(() => {
+        const m = new Manager({ errors: { policy: 'throw' } });
+
+        m.defineErrorHandler(policy, handler);
+      }).to.throw(TypeError, errorMsg);
+    }
+
+    const noop = () => {};
+
+    fail(undefined, noop, 'policy must be a string');
+    fail(null, noop, 'policy must be a string');
+    fail(0, noop, 'policy must be a string');
+    fail([], noop, 'policy must be a string');
+    fail({}, noop, 'policy must be a string');
+    fail(true, noop, 'policy must be a string');
+    fail('foo', undefined, 'handler must be a function');
+    fail('foo', null, 'handler must be a function');
+    fail('foo', 0, 'handler must be a function');
+    fail('foo', 'bar', 'handler must be a function');
+    fail('foo', {}, 'handler must be a function');
+    fail('foo', true, 'handler must be a function');
+    done();
+  });
 });
