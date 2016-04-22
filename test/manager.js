@@ -328,4 +328,19 @@ describe('Manager', () => {
       m.error(new Error('test error'));
     });
   });
+
+
+  describe('setErrorHandler()', () => {
+    it('allows the error handler to be changed', (done) => {
+      const m = new Manager({ errors: { policy: 'swallow' } });
+
+      expect(m.error.name).to.equal('noop');
+      m.error(new Error());
+      m.setErrorHandler('throw');
+      expect(() => {
+        m.error(new Error('test error'));
+      }).to.throw(Error, 'test error');
+      done();
+    });
+  });
 });
