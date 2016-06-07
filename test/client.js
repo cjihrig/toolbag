@@ -29,8 +29,8 @@ describe('Client', () => {
       const c = new Client(m);
 
       expect(c).to.be.an.instanceof(Client);
-      expect(c._manager).to.equal(m);
-      expect(c._reporters).to.deep.equal([]);
+      expect(c._manager).to.shallow.equal(m);
+      expect(c._reporters).to.equal([]);
       expect(c._commander).to.be.null();
       done();
     });
@@ -40,8 +40,8 @@ describe('Client', () => {
       const c = Client(m);
 
       expect(c).to.be.an.instanceof(Client);
-      expect(c._manager).to.equal(m);
-      expect(c._reporters).to.deep.equal([]);
+      expect(c._manager).to.shallow.equal(m);
+      expect(c._reporters).to.equal([]);
       expect(c._commander).to.be.null();
       done();
     });
@@ -55,7 +55,7 @@ describe('Client', () => {
 
       expect(c._commander).to.be.null();
       c.setCommander(commander);
-      expect(c._commander).to.equal(commander);
+      expect(c._commander).to.shallow.equal(commander);
       done();
     });
 
@@ -66,8 +66,7 @@ describe('Client', () => {
 
       function fail (commander) {
         c.setCommander(commander);
-        expect(m._err).to.be.an.instanceof(TypeError);
-        expect(m._err.message).to.match(errRe);
+        expect(m._err).to.be.an.error(TypeError, errRe);
         m._err = null;
       }
 
@@ -90,10 +89,10 @@ describe('Client', () => {
       const c = new Client();
       const reporter = { report: () => {} };
 
-      expect(c._reporters).to.deep.equal([]);
+      expect(c._reporters).to.equal([]);
       c.addReporter(reporter);
       expect(c._reporters).to.have.length(1);
-      expect(c._reporters[0]).to.equal(reporter);
+      expect(c._reporters[0]).to.shallow.equal(reporter);
       done();
     });
 
@@ -104,8 +103,7 @@ describe('Client', () => {
 
       function fail (reporter) {
         c.addReporter(reporter);
-        expect(m._err).to.be.an.instanceof(TypeError);
-        expect(m._err.message).to.match(errRe);
+        expect(m._err).to.be.an.error(TypeError, errRe);
         m._err = null;
       }
 
@@ -116,7 +114,7 @@ describe('Client', () => {
       fail([]);
       fail({});
       fail({ report: 1 });
-      expect(c._reporters).to.deep.equal([]);
+      expect(c._reporters).to.equal([]);
       done();
     });
   });
@@ -128,7 +126,7 @@ describe('Client', () => {
       const c = new Client(m);
       const commander = {
         connect (manager, callback) {
-          expect(manager).to.equal(m);
+          expect(manager).to.shallow.equal(m);
           expect(callback).to.be.a.function();
           callback();
         },
@@ -144,7 +142,7 @@ describe('Client', () => {
       const c = new Client(m);
       const commander = {
         connect (manager, callback) {
-          expect(manager).to.equal(m);
+          expect(manager).to.shallow.equal(m);
           expect(callback).to.be.a.function();
           done();
         },
@@ -159,8 +157,7 @@ describe('Client', () => {
       const c = new Client();
 
       c.connect((err) => {
-        expect(err).to.be.an.instanceof(Error);
-        expect(err.message).to.equal('command interface not configured');
+        expect(err).to.be.an.error(Error, 'command interface not configured');
         done();
       });
     });
@@ -172,8 +169,7 @@ describe('Client', () => {
       const c = new Client();
 
       c.respond(null, (err) => {
-        expect(err).to.be.an.instanceof(Error);
-        expect(err.message).to.equal('command interface not configured');
+        expect(err).to.be.an.error(Error, 'command interface not configured');
         done();
       });
     });
@@ -185,8 +181,7 @@ describe('Client', () => {
       message.bar = message;
       c._commander = {};
       c.respond(message, (err) => {
-        expect(err).to.be.an.instanceof(Error);
-        expect(err.message).to.equal('Converting circular structure to JSON: { foo: true, bar: [Circular] }');
+        expect(err).to.be.an.error(Error, 'Converting circular structure to JSON: { foo: true, bar: [Circular] }');
         done();
       });
     });
@@ -209,7 +204,7 @@ describe('Client', () => {
       c._commander = {
         respond (message, callback) {
           message = JSON.parse(message);
-          expect(message).to.deep.equal({ foo: 'bar' });
+          expect(message).to.equal({ foo: 'bar' });
           expect(callback).to.be.a.function();
           done();
         }
@@ -226,8 +221,7 @@ describe('Client', () => {
 
       message.bar = message;
       c.report(message, (err) => {
-        expect(err).to.be.an.instanceof(Error);
-        expect(err.message).to.equal('Converting circular structure to JSON: { foo: true, bar: [Circular] }');
+        expect(err).to.be.an.error(Error, 'Converting circular structure to JSON: { foo: true, bar: [Circular] }');
         done();
       });
     });
@@ -237,14 +231,14 @@ describe('Client', () => {
       const one = {
         report (message, callback) {
           message = JSON.parse(message);
-          expect(message).to.deep.equal({ foo: 'bar' });
+          expect(message).to.equal({ foo: 'bar' });
           callback();
         }
       };
       const two = {
         report (message, callback) {
           message = JSON.parse(message);
-          expect(message).to.deep.equal({ foo: 'bar' });
+          expect(message).to.equal({ foo: 'bar' });
           setImmediate(callback);
         }
       };

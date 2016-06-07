@@ -96,7 +96,7 @@ describe('Manager', () => {
       expect(m._cmds.size).to.equal(3);
 
       const result = m.list();
-      expect(result).to.deep.equal(['test1', 'test2', 'test3']);
+      expect(result).to.equal(['test1', 'test2', 'test3']);
       done();
     });
   });
@@ -109,8 +109,8 @@ describe('Manager', () => {
         plugin: {
           register (manager, options, callback) {
             setImmediate(() => {
-              expect(manager).to.equal(m);
-              expect(options).to.deep.equal({ foo: 'bar', bing: 'baz' });
+              expect(manager).to.shallow.equal(m);
+              expect(options).to.equal({ foo: 'bar', bing: 'baz' });
               expect(callback).to.be.a.function();
               callback(null);
             });
@@ -121,8 +121,8 @@ describe('Manager', () => {
       const plug2 = {
         plugin: {
           register (manager, options, callback) {
-            expect(manager).to.equal(m);
-            expect(options).to.deep.equal({});
+            expect(manager).to.shallow.equal(m);
+            expect(options).to.equal({});
             expect(callback).to.be.a.function();
             callback(null);
           }
@@ -165,8 +165,8 @@ describe('Manager', () => {
         plugin: {
           register (manager, options, callback) {
             setImmediate(() => {
-              expect(manager).to.equal(m);
-              expect(options).to.deep.equal({ foo: 'bar', bing: 'baz' });
+              expect(manager).to.shallow.equal(m);
+              expect(options).to.equal({ foo: 'bar', bing: 'baz' });
               expect(callback).to.be.a.function();
               callback(new Error('test error'));
             });
@@ -200,7 +200,7 @@ describe('Manager', () => {
 
       Insync.each(plugins, (plugin, cb) => {
         m.register(plugin, (err) => {
-          expect(err).to.be.an.instanceof(TypeError);
+          expect(err).to.be.an.error(TypeError);
           cb();
         });
       }, done);
@@ -215,9 +215,8 @@ describe('Manager', () => {
       m.client.respond = (message) => {
         expect(message.command).to.equal('command-error');
         expect(message.payload.type).to.equal('kill-9');
-        expect(message.payload.data).to.be.an.instanceof(Error);
+        expect(message.payload.data).to.be.an.error(Error, 'unknown command kill-9');
         expect(message.payload.data.stack.length).to.be.above(1);
-        expect(message.payload.data.message).to.equal('unknown command kill-9');
         expect(message.payload.data.toJSON).to.equal(Own2Json);
         done();
       };
@@ -230,15 +229,14 @@ describe('Manager', () => {
       m.client.respond = (message) => {
         expect(message.command).to.equal('command-error');
         expect(message.payload.type).to.equal('test');
-        expect(message.payload.data).to.be.an.instanceof(Error);
+        expect(message.payload.data).to.be.an.error(Error, 'test error');
         expect(message.payload.data.stack.length).to.be.above(1);
-        expect(message.payload.data.message).to.equal('test error');
         expect(message.payload.data.toJSON).to.equal(Own2Json);
         done();
       };
 
       m.add('test', (options, callback) => {
-        expect(options).to.deep.equal({ foo: true });
+        expect(options).to.equal({ foo: true });
         setImmediate(() => {
           callback(new Error('test error'));
         });
@@ -251,7 +249,7 @@ describe('Manager', () => {
       const m = new Manager({ errors: { policy: 'throw' } });
 
       m.add('test', (options, callback) => {
-        expect(options).to.deep.equal({});
+        expect(options).to.equal({});
         setImmediate(() => {
           callback(null);
         });

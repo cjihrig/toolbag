@@ -41,7 +41,7 @@ describe('Util', () => {
       Util.getConfig(defaults, (err, config) => {
         process.env.TOOLBAG_PATH = originalEnvVar;
         expect(err).to.not.exist();
-        expect(config).to.deep.equal(defaults);
+        expect(config).to.equal(defaults);
         done();
       });
     });
@@ -54,7 +54,7 @@ describe('Util', () => {
 
       Util.getConfig({}, (err, config) => {
         process.env.TOOLBAG_PATH = originalEnvVar;
-        expect(err).to.be.an.instanceof(Error);
+        expect(err).to.be.an.error();
         expect(err.code).to.equal('MODULE_NOT_FOUND');
         expect(config).to.not.exist();
         done();

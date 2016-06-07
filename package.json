@@ -21,17 +21,17 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "fs-extra": "0.28.0",
+    "fs-extra": "0.30.0",
     "insync": "2.1.1",
-    "lodash.merge": "4.3.5",
+    "lodash.merge": "4.4.0",
     "own2json": "1.0.0",
     "reach": "1.0.0"
   },
   "devDependencies": {
-    "belly-button": "2.0.1",
-    "code": "2.2.0",
-    "lab": "10.3.1",
-    "stand-in": "3.2.1"
+    "belly-button": "2.x.x",
+    "code": "3.x.x",
+    "lab": "10.x.x",
+    "stand-in": "4.x.x"
   },
   "keywords": [
     "tooling",
