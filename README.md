@@ -147,7 +147,7 @@ This section documents the APIs used to create `toolbag` plugins.
 
 ### The `Manager` Object
 
-The manager responsible for general orchestration in `toolbag`. The manager registers plugins, implements the application's error policy, and handles other important tasks. Plugins are not expected to construct new instances of `Manager`. Instead, they should interact with the existing `manager` instance that is provided to them.
+The manager responsible for general orchestration in `toolbag`. The manager registers plugins, implements the application's error policy, and handles other important tasks. Plugins are not expected to construct new instances of `Manager`. Instead, they should interact with the existing `manager` instance that is provided to them. `Manager` is an instance of `EventEmitter`.
 
 #### `add (name, fn)`
 
@@ -176,7 +176,7 @@ Returns an array of all commands supported by the manager.
   - Returns
     - Nothing
 
-This method registers one or more plugins.
+This method registers one or more plugins. If no errors occur during registration, the manager will emit a `'register'` event.
 
 #### `execute (message)`
 

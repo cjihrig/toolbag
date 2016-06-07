@@ -131,6 +131,20 @@ describe('Manager', () => {
       m.register([plug1, plug2], done);
     });
 
+    it('emits a \'register\' event', (done) => {
+      const m = new Manager({ errors: { policy: 'throw' } });
+      const plugin = {
+        plugin: {
+          register (manager, options, callback) {
+            callback();
+          }
+        }
+      };
+
+      m.on('register', done);
+      m.register(plugin);
+    });
+
     it('works with no callback function', (done) => {
       const m = new Manager({ errors: { policy: 'throw' } });
       const plugin = {
@@ -160,6 +174,8 @@ describe('Manager', () => {
         },
         options: { foo: 'bar', bing: 'baz' }
       };
+
+      m.on('register', () => { Code.fail(); });
 
       m.register(plug1, (err) => {
         expect(err.message).to.equal('test error');
