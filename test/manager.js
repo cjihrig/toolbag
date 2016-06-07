@@ -223,6 +223,15 @@ describe('Manager', () => {
       m.execute({ command: 'kill-9', options: { now: true }});
     });
 
+    it('supports an optional callback function', (done) => {
+      const m = new Manager({ errors: { policy: 'throw' } });
+
+      m.execute({ command: 'kill-9', options: { now: true }}, (err) => {
+        expect(err).to.be.an.error(Error, 'command interface not configured');
+        done();
+      });
+    });
+
     it('will execute the command from the command map if found and pass any errors to through the callback', (done) => {
       const m = new Manager({ errors: { policy: 'throw' } });
 

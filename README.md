@@ -178,12 +178,13 @@ Returns an array of all commands supported by the manager.
 
 This method registers one or more plugins. If no errors occur during registration, the manager will emit a `'register'` event.
 
-#### `execute (message)`
+#### `execute (message[, callback])`
 
   - Arguments
     - `message` (object) - An object encapsulating a command from the command server. The object should adhere to the following schema.
       - `command` (string) - The name of the command to execute.
       - `options` (object) - Options passed to the command.
+    - `callback (err)` (function) - An optional function that is called on completion. `err` represents any errors that may have occurred.
   - Returns
     - Nothing
 
