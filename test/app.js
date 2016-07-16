@@ -124,4 +124,19 @@ describe('App', () => {
       App.run();
     });
   });
+
+  it('handles errors in the config file', (done) => {
+    const originalEnvVar = process.env.TOOLBAG_PATH;
+
+    process.env.TOOLBAG_PATH = Path.join(fixturesDirectory,
+                                         'error_config.js');
+
+    StandIn.replace(console, 'error', (s, message) => {
+      process.env.TOOLBAG_PATH = originalEnvVar;
+      expect(message).to.equal('toolbag: foo');
+      done();
+    }, { stopAfter: 1 });
+
+    App.run();
+  });
 });

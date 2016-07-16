@@ -50,12 +50,26 @@ describe('Util', () => {
       const originalEnvVar = process.env.TOOLBAG_PATH;
 
       process.env.TOOLBAG_PATH = Path.join(fixturesDirectory,
-                                           'not_a_real_config.js');
+                                           'error_config.js');
 
       Util.getConfig({}, (err, config) => {
         process.env.TOOLBAG_PATH = originalEnvVar;
         expect(err).to.be.an.error();
-        expect(err.code).to.equal('MODULE_NOT_FOUND');
+        expect(err.message).to.equal('foo');
+        expect(config).to.not.exist();
+        done();
+      });
+    });
+
+    it('ignores errors when the config file is not found', (done) => {
+      const originalEnvVar = process.env.TOOLBAG_PATH;
+
+      process.env.TOOLBAG_PATH = Path.join(fixturesDirectory,
+                                           'not_a_real_config.js');
+
+      Util.getConfig({}, (err, config) => {
+        process.env.TOOLBAG_PATH = originalEnvVar;
+        expect(err).to.not.exist();
         expect(config).to.not.exist();
         done();
       });

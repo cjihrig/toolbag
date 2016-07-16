@@ -15,7 +15,7 @@
   "license": "MIT",
   "scripts": {
     "lint": "belly-button -f",
-    "test": "npm run lint && lab -v -a code -c"
+    "test": "npm run lint && lab -v -a code -c --flat"
   },
   "engines": {
     "node": ">=4.0.0"
