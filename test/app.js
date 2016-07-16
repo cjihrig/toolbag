@@ -61,10 +61,9 @@ describe('App', () => {
       StandIn.replace(console, 'error', (s, message) => {
         Client.prototype.connect = connect;
         process.env.TOOLBAG_PATH = originalEnvVar;
-        s.restore();
         expect(message).to.equal('toolbag: foo');
         done();
-      });
+      }, { stopAfter: 1 });
 
       App.run();
     });
@@ -116,10 +115,9 @@ describe('App', () => {
       StandIn.replace(console, 'error', (s, message) => {
         process.env.TOOLBAG_PATH = originalEnvVar;
         Manager.prototype.register = register;
-        s.restore();
         expect(message).to.equal('toolbag: foo');
         done();
-      });
+      }, { stopAfter: 1 });
 
       App.run();
     });

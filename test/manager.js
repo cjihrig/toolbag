@@ -302,10 +302,9 @@ describe('Manager', () => {
       const m = new Manager({ errors: { policy: 'log' } });
 
       StandIn.replace(console, 'error', (s, message) => {
-        s.restore();
         expect(message).to.equal('toolbag: test error');
         done();
-      });
+      }, { stopAfter: 1 });
       m.error(new Error('test error'));
     });
 
@@ -313,14 +312,12 @@ describe('Manager', () => {
       const m = new Manager({ errors: { policy: 'log-verbose' } });
 
       StandIn.replace(console, 'error', (s, message) => {
-        s.restore();
-
         const stack = message.split('\n');
 
         expect(stack[0]).to.equal('toolbag: Error: test error');
         expect(stack.length).to.be.greaterThan(2);
         done();
-      });
+      }, { stopAfter: 1 });
       m.error(new Error('test error'));
     });
 
@@ -336,18 +333,15 @@ describe('Manager', () => {
     it('"terminate" option exits the running process and logs verbose', (done) => {
       const m = new Manager({ errors: { policy: 'terminate' } });
       StandIn.replace(console, 'error', (s, message) => {
-        s.restore();
-
         const stack = message.split('\n');
 
         expect(stack[0]).to.equal('toolbag: Error: test error');
         expect(stack.length).to.be.greaterThan(2);
-      });
+      }, { stopAfter: 1 });
       StandIn.replace(process, 'exit', (s, code) => {
-        s.restore();
         expect(code).to.equal(1);
         done();
-      });
+      }, { stopAfter: 1 });
       m.error(new Error('test error'));
     });
   });
