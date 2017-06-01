@@ -6,8 +6,6 @@
 
 [![belly-button-style](https://cdn.rawgit.com/continuationlabs/belly-button/master/badge.svg)](https://github.com/continuationlabs/belly-button)
 
-`toolbag` is sponsored by [Continuation Labs](https://continuation.io/) and [nearForm](http://www.nearform.com/).
-
 `toolbag` is a collection of tooling intended to be preloaded in a Node application. The tooling (heapdumps, CPU profiling, runtime metrics reporting, etc.) runs within an application's Node process. By utilizing preloading, `toolbag` does not require any modifications to existing application code. For example, if you normally start your application with the command `node app.js`, then your command would become:
 
 ```
